@@ -17,9 +17,9 @@ function! MakeMatlabComment()
     exec "normal `d"
     let l:line=getline(line("."))
     let l:eqPos=match(l:line, "=")
+    let l:startPos=match(l:line, "function")
+    let l:matchIndex=match(l:line, "\\i\\+\s*", l:startPos+8)
     if (l:eqPos >= 0)
-       let l:startPos=match(l:line, "function")
-       let l:matchIndex=match(l:line, "\\i\\+\s*", l:startPos+8)
        let l:foundParam=0
        while (l:matchIndex >= 0) 
           if (l:matchIndex >= l:eqPos)
@@ -30,6 +30,7 @@ function! MakeMatlabComment()
           let l:param=expand("<cword>")
           exec l:nextParamLine
           exec "normal O% " . g:MakeMatlabComment_paramTag . l:param . " [OUT] "
+          exec "normal gUU"
           let l:nextParamLine=l:nextParamLine+1
 
           exec "normal `d"
@@ -56,6 +57,7 @@ function! MakeMatlabComment()
         let l:param=expand("<cword>")
         exec l:nextParamLine
         exec "normal O% " . g:MakeMatlabComment_paramTag . l:param . " [IN] "
+        exec "normal gUU"
         let l:nextParamLine=l:nextParamLine+1
 
         exec "normal `d"
@@ -69,10 +71,11 @@ function! MakeMatlabComment()
     endwhile
 
     exec l:nextParamLine
-    exec "normal O% AUTHOR  Author Name"
+    exec "normal O% AUTHOR  Vinay Middha"
     
     exec l:nextParamLine+1
     exec "normal O% " . l:fname . "  "
+    exec "normal gUU"
     exec "normal dd`dp"
     
     startinsert!
