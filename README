@@ -1,0 +1,37 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=676
+
+Generates a comment skeleton for a matlab function. 
+
+For example:
+function xs = get_slantx(x, y, angle)
+When the script (VERSION 0.3) is run on this line the output is like:
+function xs = get_slantx(x, y, angle)
+% get_slantx  
+% 
+% Input:
+% ^^^^^^
+% . x
+% . y
+% . angle
+%
+% Output:
+% ^^^^^^^
+% . xs
+%% AUTHOR  Author Name
+
+This format is compatible with Matdoc. See version comments below to know more about Matdoc.
+
+For previous versions the output looks similar to:
+% get_slantx   
+% function xs = get_slantx(x, y, angle)
+% PARAM xs [OUT] 
+% PARAM x [IN] 
+% PARAM y [IN] 
+% PARAM angle [IN] 
+% AUTHOR  Author Name
+
+This script is derived from MakeDoxygenComment by Leif Wickland.
+
+After the installation you can run the script simply by hitting <ALT+c> when the cursor is on function line.
+
+
