@@ -1,89 +1,116 @@
 if exists("loaded_MakeMatlabComment")
    " load only once
-    finish
+   finish
 endif
 let loaded_MakeMatlabComment = 1
+
 
 let g:MakeMatlabComment_paramTag=". "
 
 function! MakeMatlabComment()
-    mark d
-    exec "normal o"
-    let l:nextParamLine=line(".")
-    exec "normal `d"
-    let l:line=getline(line("."))
-    let l:eqPos=match(l:line, "=")
-    let l:startPos=match(l:line, "function")
-    let l:matchIndex=match(l:line, "\\i\\+\s*", l:startPos+8)
-    if (l:eqPos >= 0)
-       exec l:nextParamLine
-       exec "normal O% ^^^^^^^"
-       exec "normal O% Output:"
-       exec "normal O% "
-       let l:nextParamLine=l:nextParamLine+3
-       let l:foundParam=0
-       while (l:matchIndex >= 0) 
-          if (l:matchIndex >= l:eqPos)
-             break
-          endif
-          let l:foundParam=1
-          exec "normal `d"
-          exec "normal " . (l:matchIndex + 1) . "|"
-          let l:param=expand("<cword>")
-          exec l:nextParamLine
-          exec "normal O% " . g:MakeMatlabComment_paramTag . l:param
-          let l:nextParamLine=l:nextParamLine+1
+   mark d
+   let l:lineStr=getline(line("."))
 
-          exec "normal `d"
-          "echo "l:startPos before: " . l:startPos
-          "echo "l:matchIndex = " . l:matchIndex
-          "echo "strlen=" . strlen(l:param)
-          "echo "total=" . (l:matchIndex+strlen(l:param)+1)
-          let l:startPos=(l:matchIndex+strlen(l:param)+1)
-          let l:matchIndex=match(line,"\\i\\+\s*",l:startPos)
-       endwhile
-    endif
-    
-    exec l:nextParamLine
-    exec "normal O%% AUTHOR  Author Name"
-    let l:nextParamLine=l:nextParamLine+1
-    
-    exec "normal `d"
-    exec "normal " . (l:matchIndex + 1) . "|"
-    let l:fname=expand("<cword>")
+   let l:nextLine=line(".")+1
 
-    let l:startPos=match(l:line, "(")
-    let l:matchIndex=match(l:line,"\\i\\+\s*[,)]",l:startPos)
-    
-    exec "normal o% "
-    exec "normal o% Input:"
-    exec "normal o% ^^^^^^"
-    let l:nextParamLine=l:line+5
-    
-    let l:foundParam=0
-    while (l:matchIndex >= 0)
-        let l:foundParam=1
-        exec "normal 'd" 
-        exec "normal " . (l:matchIndex + 1) . "|"
-        let l:param=expand("<cword>")
-        exec l:nextParamLine
-        exec "normal O% " . g:MakeMatlabComment_paramTag . l:param
-        let l:nextParamLine=l:nextParamLine+1
+   let l:eqPos=match(l:lineStr, "=")
+   let l:startPos=match(l:lineStr, "function")
+   if (l:startPos < 0)
+      return -1
+   endif
 
-        exec "normal `d"
-        "echo "l:startPos before: " . l:startPos
-        "echo "l:matchIndex = " . l:matchIndex
-        "echo "strlen=" . strlen(l:param)
-        "echo "total=" . (l:matchIndex+strlen(l:param)+1)
-        let l:startPos=(l:matchIndex+strlen(l:param)+1)
-        "echo "l:startPos after: " . l:startPos
-        let l:matchIndex=match(line,"\\i\\+\s*[,)]",l:startPos)
-    endwhile
+   let l:funNamePos = l:eqPos
+   if (l:funNamePos <= 0)
+      let l:funNamePos = l:startPos+9
+   endif
 
-    exec l:nextParamLine+1
-    exec "normal O% " . l:fname . "  "
-    exec "normal dd`dp"
-    
-    startinsert!
+   " Function name
+   let l:matchIndex=match(l:lineStr, "\\i\\+\s*", l:funNamePos)
+   normal 'd
+   exec "normal " . (l:matchIndex + 1) . "|"
+   let l:funName = expand("<cword>")
+
+   call append(l:nextLine-1, "\% " . l:funName . "  ")
+   let l:nextLine=l:nextLine+1
+
+   " Empty lineStr
+   call append(l:nextLine-1, "\%")
+   let l:nextLine=l:nextLine+1
+
+   " Input parameters
+   let l:parenPos=match(l:lineStr, "(")
+   if (l:parenPos >= 0)
+      call append(l:nextLine-1, "\% Input:")
+      let l:nextLine=l:nextLine+1
+      call append(l:nextLine-1, "\% ^^^^^^")
+      let l:nextLine=l:nextLine+1
+
+      let l:matchIndex=match(l:lineStr, "\\i\\+\s*", l:parenPos)
+      while (l:matchIndex >= parenPos)
+         normal 'd
+         exec "normal " . (l:matchIndex + 1) . "|"
+         let l:param = expand("<cword>")
+         call append(l:nextLine-1, "\% " . g:MakeMatlabComment_paramTag . l:param)
+         let l:nextLine=l:nextLine+1
+
+         let l:paramPos=(l:matchIndex+strlen(l:param)+1)
+         let l:matchIndex=match(lineStr,"\\i\\+\s*",l:paramPos)
+      endwhile
+
+      " Empty lineStr
+      call append(l:nextLine-1, "\%")
+      let l:nextLine = l:nextLine+1
+   endif
+
+   " Output parameters
+   if (l:eqPos >= 0)
+      call append(l:nextLine-1, "\% Output:")
+      let l:nextLine=l:nextLine+1
+      call append(l:nextLine-1, "\% ^^^^^^^")
+      let l:nextLine=l:nextLine+1
+
+      let l:oParamPos = l:startPos + 8
+      let l:matchIndex = match(l:lineStr, "\\i\\+\s*", l:oParamPos)
+
+      while (l:matchIndex >= 0) 
+         if (l:matchIndex >= l:eqPos)
+            break
+         endif
+
+         normal 'd
+         exec "normal " . (l:matchIndex + 1) . "|"
+         let l:param=expand("<cword>")
+
+         call append(l:nextLine-1, "\% " . g:MakeMatlabComment_paramTag . l:param)
+         let l:nextLine=l:nextLine+1
+
+         let l:oParamPos=(l:matchIndex+strlen(l:param)+1)
+         let l:matchIndex=match(lineStr,"\\i\\+\s*",l:oParamPos)
+      endwhile
+
+      " Empty lineStr
+      call append(l:nextLine-1, "\%")
+      let l:nextLine=l:nextLine+1
+   endif
+
+   " See also lineStr
+   call append(l:nextLine-1, "\% See also:")
+   let l:nextLine=l:nextLine+1
+   call append(l:nextLine-1, "\% ^^^^^^^^^")
+   let l:nextLine=l:nextLine+1
+
+   " Empty lineStr
+   call append(l:nextLine-1, "\%")
+   let l:nextLine=l:nextLine+1
+
+   " Author lineStr
+   call append(l:nextLine-1, "\%% Author: Vinay Middha")
+   let l:nextLine=l:nextLine+1
+
+   " Set cursor position after function name
+   normal 'dj$
+   " insert mode
+   startinsert!
 endfunction
+
 
